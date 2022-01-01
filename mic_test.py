@@ -1,8 +1,10 @@
 #!/usr/bin/python3
 
+
 from microphone import MICROPHONE_CHUNK_SIZE, Microphone
 import struct
 import math
+import os
 from numpy import fft as fft
 from panel_sim import PanelType, PanelGeometry, PanelSim
 
@@ -42,19 +44,26 @@ def get_rms(block) -> float:
     return math.sqrt(sum_squares / count)
 
 
-def get_second_rms(dt: float):
+num = 0
 
+
+def get_second_rms(dt: float):
+    global num
     data = mic.read()
     rms = get_rms(data)
 
-    rms_color = int(rms * 255.0)
-    rms_color += 50
-    color = (rms_color, int(rms_color/2), int(rms_color*2), 255)
+    rms_color = int(rms * 2550)
+    rms_color += 100
+    color = (int(rms_color*(rms*100)), int(rms_color / 2), (rms_color+60), 255)
 
-    # if get_rms(data) > SOME_RANDO_AMPLITUDE:
-    #     color = (255, 123, 123, 255)
+    # for i in range(num, len(panel.leds())):
+    panel.leds()[num].color = color[:3]
 
-    panel.label_text_update('{:02.4f}'.format(rms), color)
+    panel.label_text_update('{:02.4f}'.format(rms), (112, 112, 112, 255))
+    if num == len(panel.leds())-1:
+        num = 0
+    else:
+        num += 1
 
 
 if __name__ == '__main__':
@@ -64,7 +73,8 @@ if __name__ == '__main__':
 
     panel = panel_sim_init()
     panel.window().set_caption('MossPyTrans')
-    panel.label_update_set(get_second_rms, 0.0000001)
+    panel.window().set_fullscreen()  # width=1920, height=1200
+    panel.label_update_set(get_second_rms, 0.00000001)
     panel.run()
 
     print('Stopping microphone')
